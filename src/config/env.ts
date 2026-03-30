@@ -14,6 +14,8 @@ function req(name: string, fallback?: string): string {
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
+  /** Peticiones HTTP en consola (morgan). Desactivar: HTTP_LOG=0 */
+  httpLog: !['0', 'false', 'no', 'off'].includes((process.env.HTTP_LOG ?? '').toLowerCase()),
   port: parseInt(process.env.PORT ?? '4001', 10),
   databaseUrl: req('DATABASE_URL'),
   jwtSecret: req('JWT_SECRET'),

@@ -1,0 +1,81 @@
+name: Deploy admin backend (API panel CrunchyPaws)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          request_pty: true
+          timeout: 30s
+          command_timeout: 15m
+          script: |
+            set -e
+
+            REPO="${{ secrets.VPS_PATH }}"
+            APP="${{ secrets.VPS_APP_PATH }}"
+
+            echo "Entrando al repo"
+            cd "$REPO"
+
+            git config --global --add safe.directory "$REPO"
+
+            echo "Actualizando código"
+            git pull origin main
+
+            echo "Instalando dependencias (incl. dev: Prisma CLI para migraciones)"
+            npm ci
+
+            echo "Compilando admin backend"
+            npm run build
+
+            echo "Publicando en $APP"
+            sudo mkdir -p "$APP/prisma"
+
+            if [ -f "$APP/.env" ]; then
+              echo "Preservando .env"
+              sudo cp "$APP/.env" /tmp/crunchypaws-admin-backend-env-backup
+            fi
+
+            cd "$APP"
+            sudo find . -mindepth 1 -maxdepth 1 \
+              ! -name '.env' \
+              ! -name 'node_modules' \
+              -exec rm -rf {} + || true
+
+            cd "$REPO"
+            sudo cp -R dist/* "$APP/"
+            sudo cp package.json "$APP/"
+            sudo cp package-lock.json "$APP/"
+            sudo cp -R prisma/. "$APP/prisma/"
+
+            if [ -f /tmp/crunchypaws-admin-backend-env-backup ]; then
+              echo "Restaurando .env"
+              sudo mv /tmp/crunchypaws-admin-backend-env-backup "$APP/.env"
+              sudo chmod 600 "$APP/.env"
+            else
+              echo "No se encontró .env previo. Copia .env.production.example a .env y ajusta valores."
+            fi
+
+            sudo chown -R ${{ secrets.VPS_USER }}:${{ secrets.VPS_USER }} "$APP"
+
+            echo "Instalando dependencias en destino y aplicando migraciones"
+            cd "$APP"
+            npm ci
+            npm run db:deploy
+
+            echo "Reiniciando proceso"
+            pm2 restart crunchypaws-ecommerce-admin-api || pm2 start index.js --name crunchypaws-ecommerce-admin-api
+            pm2 save
+
+            echo "Despliegue completado"

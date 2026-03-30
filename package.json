@@ -8,6 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:create-admin": "tsx src/scripts/create-admin-user.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:win": "set NODE_OPTIONS=--experimental-vm-modules && jest"

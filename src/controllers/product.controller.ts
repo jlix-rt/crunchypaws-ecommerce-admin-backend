@@ -11,7 +11,7 @@ export async function list(_req: Request, res: Response, next: NextFunction) {
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { name, description, price, stock, categoryId, sku, isVisible, tracksStock } = req.body;
+    const { name, description, price, stock, categoryId, sku, isVisible, tracksStock, isPopular } = req.body;
     if (!name || description == null || price == null || stock == null || !categoryId) {
       res.status(400).json({ error: 'Campos requeridos incompletos' });
       return;
@@ -25,6 +25,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       sku: sku ?? null,
       isVisible: isVisible ?? true,
       tracksStock: tracksStock !== false && tracksStock !== 'false',
+      isPopular: isPopular === true || isPopular === 'true',
     });
     res.status(201).json(p);
   } catch (e) {
@@ -34,7 +35,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 
 export async function update(req: Request, res: Response, next: NextFunction) {
   try {
-    const { name, description, price, stock, categoryId, sku, imageUrl, isVisible, tracksStock } = req.body;
+    const { name, description, price, stock, categoryId, sku, imageUrl, isVisible, tracksStock, isPopular } = req.body;
     const data: Record<string, unknown> = {};
     if (name != null) data.name = name;
     if (description != null) data.description = description;
@@ -47,6 +48,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
     if (tracksStock !== undefined) {
       data.tracksStock = tracksStock !== false && tracksStock !== 'false';
     }
+    if (isPopular !== undefined) data.isPopular = isPopular === true || isPopular === 'true';
     const p = await productService.updateProduct(req.params.id, data as Parameters<
       typeof productService.updateProduct
     >[1]);

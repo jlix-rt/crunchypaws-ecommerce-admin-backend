@@ -23,6 +23,7 @@ export async function createProduct(data: {
   sku?: string | null;
   isVisible?: boolean;
   tracksStock?: boolean;
+  isPopular?: boolean;
 }) {
   const cat = await prisma.category.findFirst({ where: { id: data.categoryId, deletedAt: null } });
   if (!cat) throw new AppError(400, 'Categoría no encontrada');
@@ -36,6 +37,7 @@ export async function createProduct(data: {
       categoryId: data.categoryId,
       sku: data.sku ?? null,
       isVisible: data.isVisible ?? true,
+      isPopular: data.isPopular ?? false,
     },
     include: { images: true, category: true },
   });
@@ -53,6 +55,7 @@ export async function updateProduct(
     imageUrl: string | null;
     isVisible: boolean;
     tracksStock: boolean;
+    isPopular: boolean;
   }>,
 ) {
   const p = await prisma.product.findFirst({ where: { id, deletedAt: null } });
@@ -74,6 +77,7 @@ export async function updateProduct(
   if (data.imageUrl !== undefined) prismaData.imageUrl = data.imageUrl;
   if (data.isVisible !== undefined) prismaData.isVisible = data.isVisible;
   if (data.tracksStock !== undefined) prismaData.tracksStock = data.tracksStock;
+  if (data.isPopular !== undefined) prismaData.isPopular = data.isPopular;
 
   return prisma.product.update({
     where: { id },

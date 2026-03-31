@@ -1,0 +1,2 @@
+ALTER TABLE "Product"
+ADD COLUMN "is_popular" BOOLEAN NOT NULL DEFAULT false;
